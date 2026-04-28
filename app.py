@@ -6,7 +6,7 @@ from pymongo import MongoClient
 # Konfigurasi Halaman
 st.set_page_config(page_title="TANIKITA - Rencana Produksi", layout="wide")
 
-# Custom CSS untuk Tema Pertanian Profesional (Tanpa Emoji)
+# Custom CSS untuk Tema Pertanian Profesional
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
@@ -23,12 +23,21 @@ st.markdown("""
 
     .main { background-color: #fcfdfa; }
     
+    /* Perbaikan Tombol */
     .stButton>button {
-        background-color: #2d5a27;
-        color: white;
-        border-radius: 4px;
-        padding: 10px 24px;
-        border: none;
+        background-color: #2d5a27 !important;
+        color: white !important;
+        border-radius: 4px !important;
+        padding: 10px 24px !important;
+        border: none !important;
+        transition: all 0.3s ease;
+    }
+    
+    /* Warna tombol saat kursor diarahkan (Hover) */
+    .stButton>button:hover {
+        background-color: #1b3312 !important; 
+        color: #e8f5e9 !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
 
     .stMetric {
@@ -87,11 +96,26 @@ tab1, tab2, tab3 = st.tabs(["Pencatatan", "Prediksi Produksi", "Visualisasi Data
 with tab1:
     st.subheader("Data Periode Produksi")
     
-    col_a, col_b = st.columns(2)
-    with col_a:
-        periode = st.text_input("Periode Tanam-Panen", placeholder="Contoh: April - Mei 2026")
-        jenis_tanaman = st.selectbox("Jenis Tanaman", 
-                                    ["Cabai Merah", "Bawang Merah", "Jagung (Palawija)", "Kedelai (Palawija)", "Tomat (Hortikultura)", "Sawi", "Lainnya"])
+    # Memecah input periode menjadi 3 kolom agar rapi dan seragam
+    st.write("Tentukan Rentang Waktu Produksi:")
+    col_p1, col_p2, col_p3 = st.columns(3)
+    
+    daftar_bulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
+    
+    with col_p1:
+        bulan_tanam = st.selectbox("Bulan Tanam", daftar_bulan, index=3) # Index 3 = April
+    with col_p2:
+        bulan_panen = st.selectbox("Bulan Panen", daftar_bulan, index=4) # Index 4 = Mei
+    with col_p3:
+        tahun_periode = st.number_input("Tahun", min_value=2020, max_value=2050, value=2026)
+        
+    # Menggabungkan hasil input menjadi satu string yang standar
+    periode = f"{bulan_tanam} - {bulan_panen} {tahun_periode}"
+    
+    st.markdown("---")
+    
+    jenis_tanaman = st.selectbox("Jenis Komoditas Tanaman", 
+                                ["Cabai Merah (Hortikultura)", "Bawang Merah (Hortikultura)", "Tomat (Hortikultura)", "Jagung (Palawija)", "Kedelai (Palawija)", "Padi", "Lainnya"])
     
     st.markdown("### Rincian Biaya")
     col1, col2 = st.columns(2)
