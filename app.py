@@ -211,9 +211,28 @@ with tab3:
     if data_user:
         df = pd.DataFrame(data_user)
         
-        # Tabel Data
+        # REVISI: Mengubah indeks agar dimulai dari 1
+        df.index = range(1, len(df) + 1)
+        df.index.name = "No"
+        
         st.write("Tabel Rincian Aktivitas")
-        st.dataframe(df, use_container_width=True)
+        
+        # REVISI: Memberikan warna pada tabel agar lebih tegas dan terlihat
+        styled_df = df.style.set_table_styles([
+            {'selector': 'th', 'props': [
+                ('background-color', '#2d5a27'), 
+                ('color', 'white'), 
+                ('font-weight', 'bold'),
+                ('text-align', 'center')
+            ]},
+            {'selector': 'td', 'props': [
+                ('border', '1px solid #d3d3d3'),
+                ('padding', '8px')
+            ]}
+        ])
+        
+        # Menampilkan tabel yang sudah diperbaiki desainnya
+        st.dataframe(styled_df, use_container_width=True)
         
         st.markdown("### Visualisasi Tren")
         col_vis1, col_vis2 = st.columns(2)
@@ -234,6 +253,6 @@ with tab3:
         c1, c2, c3 = st.columns(3)
         c1.metric("Total Panen Terakumulasi", f"{df['Hasil_Panen_Kg'].sum():,.0f} Kg")
         c2.metric("Total Keuntungan Bersih", f"Rp {df['Keuntungan'].sum():,.0f}")
-        c3.write(f"Frekuensi: {total_untung} Kali Untung, {total_rugi} Kali Rugi")
+        c3.write(f"Frekuensi: **{total_untung}** Kali Untung, **{total_rugi}** Kali Rugi")
     else:
         st.write("Belum ada data untuk divisualisasikan.")
