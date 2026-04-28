@@ -81,7 +81,7 @@ except Exception as e:
 
 # Header Utama
 st.title("TANIKITA")
-st.write("Sistem Informasi Manajemen dan Perencanaan Produksi Pertanian Indonesia.")
+st.write("Sistem Informasi Manajemen dan Perencanaan Produksi Pertanian.")
 
 # Sidebar
 with st.sidebar:
