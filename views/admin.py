@@ -86,7 +86,7 @@ with tab_users:
             }
         )
         
-        user_dihapus = edited_users[edited_users["Tandai Hapus"] == True]
+        user_dihapus = edited_users[edited_users["Hapus Data"] == True]
         if not user_dihapus.empty:
             st.markdown("---")
             with st.popover("Konfirmasi Penghapusan Pengguna"):
