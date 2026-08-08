@@ -30,6 +30,7 @@ with tab_data:
     if semua_data:
         df_global = pd.DataFrame(semua_data)
         df_global.index = range(1, len(df_global) + 1)
+        # Menyeragamkan nama kolom menjadi "Tandai Hapus"
         df_global["Tandai Hapus"] = False
         
         c1, c2 = st.columns(2)
@@ -49,6 +50,7 @@ with tab_data:
             }
         )
         
+        # Pengecekan menggunakan nama kolom yang tepat
         baris_dihapus_global = edited_global[edited_global["Tandai Hapus"] == True]
         if not baris_dihapus_global.empty:
             st.markdown("---")
@@ -74,6 +76,7 @@ with tab_users:
     if semua_user:
         df_users = pd.DataFrame(semua_user)
         df_users.index = range(1, len(df_users) + 1)
+        # Menyeragamkan nama kolom menjadi "Tandai Hapus"
         df_users["Tandai Hapus"] = False
         
         st.write("Centang kotak pada kolom paling kanan untuk menghapus pengguna beserta seluruh datanya.")
@@ -86,7 +89,8 @@ with tab_users:
             }
         )
         
-        user_dihapus = edited_users[edited_users["Hapus Data"] == True]
+        # Pengecekan menggunakan nama kolom yang tepat
+        user_dihapus = edited_users[edited_users["Tandai Hapus"] == True]
         if not user_dihapus.empty:
             st.markdown("---")
             with st.popover("Konfirmasi Penghapusan Pengguna"):
