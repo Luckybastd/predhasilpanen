@@ -1,258 +1,53 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-from pymongo import MongoClient
 
-# Konfigurasi Halaman
-st.set_page_config(page_title="TANIKITA - Rencana Produksi", layout="wide")
+# Konfigurasi Halaman harus selalu menjadi perintah Streamlit pertama
+st.set_page_config(page_title="TANIKITA | Beranda", page_icon="🌾", layout="wide")
 
-# Custom CSS untuk Tema Pertanian Profesional
+# Custom CSS
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
-    
-    html, body, [class*="css"] {
-        font-family: 'Open Sans', sans-serif;
-        background-color: #fcfdfa;
-    }
-    
-    h1, h2, h3 {
-        font-family: 'Lora', serif;
-        color: #1b3312;
-    }
-
-    .main { background-color: #fcfdfa; }
-    
-    /* Perbaikan Tombol */
-    .stButton>button {
-        background-color: #2d5a27 !important;
-        color: white !important;
-        border-radius: 4px !important;
-        padding: 10px 24px !important;
-        border: none !important;
-        transition: all 0.3s ease;
-    }
-    
-    /* Warna tombol saat kursor diarahkan (Hover) */
-    .stButton>button:hover {
-        background-color: #1b3312 !important; 
-        color: #e8f5e9 !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-
-    .stMetric {
-        background-color: #ffffff;
-        padding: 20px;
-        border-radius: 10px;
-        border-top: 5px solid #2d5a27;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    }
-
-    .status-untung {
-        color: #2d5a27;
-        font-weight: bold;
-        background-color: #e8f5e9;
-        padding: 5px 10px;
-        border-radius: 4px;
-    }
-
-    .status-rugi {
-        color: #b71c1c;
-        font-weight: bold;
-        background-color: #ffebee;
-        padding: 5px 10px;
-        border-radius: 4px;
-    }
+    html, body, [class*="css"] { font-family: 'Open Sans', sans-serif; background-color: #fcfdfa; }
+    h1, h2, h3 { font-family: 'Lora', serif; color: #1b3312; }
+    .hero-section { background-color: #e8f5e9; padding: 50px; border-radius: 10px; text-align: center; margin-bottom: 30px; border-bottom: 5px solid #2d5a27;}
+    .feature-box { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: 100%; border-top: 4px solid #4CAF50;}
     </style>
     """, unsafe_allow_html=True)
 
-# Inisialisasi Koneksi MongoDB
-@st.cache_resource
-def init_connection():
-    return MongoClient(st.secrets["mongo"]["uri"])
+# Hero Section
+st.markdown("""
+    <div class="hero-section">
+        <h1 style='font-size: 3rem;'>Selamat Datang di TANIKITA</h1>
+        <p style='font-size: 1.2rem; color: #3b592d;'>Sistem Informasi Manajemen, Pencatatan Finansial, dan Ekstrapolasi Hasil Panen Terpadu.</p>
+    </div>
+""", unsafe_allow_html=True)
 
-try:
-    client = init_connection()
-    db = client.pertanian_db
-    collection = db.pencatatan
-except Exception as e:
-    st.error("Koneksi gagal. Periksa kembali konfigurasi database Anda.")
-    st.stop()
+st.write("### Mengapa Menggunakan TANIKITA?")
+col1, col2, col3 = st.columns(3)
 
-# Header Utama
-st.title("TANIKITA")
-st.write("Sistem Informasi Manajemen dan Perencanaan Produksi Pertanian.")
+with col1:
+    st.markdown("""
+    <div class="feature-box">
+        <h3>📊 Pencatatan Akurat</h3>
+        <p>Kelola biaya operasional (lahan, bibit, pupuk) dan pantau margin keuntungan bersih secara real-time.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-# Sidebar
-with st.sidebar:
-    st.header("Identitas Pengguna")
-    user_id = st.text_input("ID Petani", value="Petani_Mandiri_01")
-    st.markdown("---")
-    st.write("Periode Tanam-Panen membantu dalam analisis efisiensi musiman.")
+with col2:
+    st.markdown("""
+    <div class="feature-box">
+        <h3>📈 Ekstrapolasi Matematis</h3>
+        <p>Gunakan data historis untuk memprediksi hasil panen di masa depan dengan perhitungan algoritma berulang yang mendetail.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-# Menu Tab
-tab1, tab2, tab3 = st.tabs(["Pencatatan", "Prediksi Produksi", "Visualisasi Data"])
+with col3:
+    st.markdown("""
+    <div class="feature-box">
+        <h3>🔒 Keamanan Data (Enkripsi)</h3>
+        <p>Data dilindungi dengan sistem multi-user tersertifikasi menggunakan hashing bcrypt. Privasi 100% terjaga.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-with tab1:
-    st.subheader("Data Periode Produksi")
-    
-    # Memecah input periode menjadi 3 kolom agar rapi dan seragam
-    st.write("Tentukan Rentang Waktu Produksi:")
-    col_p1, col_p2, col_p3 = st.columns(3)
-    
-    daftar_bulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
-    
-    with col_p1:
-        bulan_tanam = st.selectbox("Bulan Tanam", daftar_bulan, index=3) # Index 3 = April
-    with col_p2:
-        bulan_panen = st.selectbox("Bulan Panen", daftar_bulan, index=4) # Index 4 = Mei
-    with col_p3:
-        tahun_periode = st.number_input("Tahun", min_value=2020, max_value=2050, value=2026)
-        
-    # Menggabungkan hasil input menjadi satu string yang standar
-    periode = f"{bulan_tanam} - {bulan_panen} {tahun_periode}"
-    
-    st.markdown("---")
-    
-    jenis_tanaman = st.selectbox("Jenis Komoditas Tanaman", 
-                                ["Cabai Merah (Hortikultura)", "Bawang Merah (Hortikultura)", "Tomat (Hortikultura)", "Jagung (Palawija)", "Kedelai (Palawija)", "Padi", "Lainnya"])
-    
-    st.markdown("### Rincian Biaya")
-    col1, col2 = st.columns(2)
-    with col1:
-        b_lahan = st.number_input("Biaya Pengolahan Lahan (Rp)", min_value=0)
-        b_bibit = st.number_input("Biaya Bibit (Rp)", min_value=0)
-    with col2:
-        b_pupuk = st.number_input("Biaya Pupuk (Rp)", min_value=0)
-        b_perawatan = st.number_input("Biaya Perawatan (Rp)", min_value=0)
-        
-    st.markdown("### Hasil Produksi")
-    col3, col4 = st.columns(2)
-    with col3:
-        hasil_kg = st.number_input("Hasil Panen (Kg)", min_value=0.0)
-    with col4:
-        harga_jual = st.number_input("Harga Jual Per Kg (Rp)", min_value=0)
-    
-    total_biaya = b_lahan + b_bibit + b_pupuk + b_perawatan
-    pendapatan = hasil_kg * harga_jual
-    keuntungan = pendapatan - total_biaya
-    status = "UNTUNG" if keuntungan > 0 else "RUGI"
-    
-    st.markdown("---")
-    col_res1, col_res2 = st.columns(2)
-    with col_res1:
-        st.metric("Total Keuntungan/Kerugian", f"Rp {keuntungan:,.0f}")
-    with col_res2:
-        if status == "UNTUNG":
-            st.markdown(f"Status: <span class='status-untung'>{status}</span>", unsafe_allow_html=True)
-        else:
-            st.markdown(f"Status: <span class='status-rugi'>{status}</span>", unsafe_allow_html=True)
-
-    if st.button("Simpan Data ke TANIKITA"):
-        if not periode:
-            st.warning("Mohon isi periode tanam-panen.")
-        else:
-            dokumen = {
-                "User": user_id,
-                "Periode": periode,
-                "Jenis_Tanaman": jenis_tanaman,
-                "Biaya_Lahan": b_lahan,
-                "Biaya_Bibit": b_bibit,
-                "Biaya_Pupuk": b_pupuk,
-                "Biaya_Perawatan": b_perawatan,
-                "Hasil_Panen_Kg": hasil_kg,
-                "Harga_Jual": harga_jual,
-                "Keuntungan": keuntungan,
-                "Status": status
-            }
-            collection.insert_one(dokumen)
-            st.success("Data periode berhasil tercatat.")
-
-with tab2:
-    st.subheader("Metode Peramalan Hasil")
-    
-    metode = st.radio("Pilih Metode Prediksi", ["Ubinan (Cepat/Sample)", "Interpolasi (Berdasarkan Histori)"])
-    
-    if metode == "Ubinan (Cepat/Sample)":
-        col_u1, col_u2 = st.columns(2)
-        with col_u1:
-            luas_lahan = st.number_input("Luas Lahan Total (m2)", value=1000.0)
-            luas_sampel = st.number_input("Luas Sampel Ubinan (m2)", value=6.25)
-        with col_u2:
-            berat_sampel = st.number_input("Berat Sampel (Kg)", value=5.0)
-        
-        prediksi_ubinan = (luas_lahan / luas_sampel) * berat_sampel
-        st.metric("Prediksi Total Panen", f"{prediksi_ubinan:,.2f} Kg")
-        
-    else:
-        st.write("Prediksi Interpolasi Linear berdasarkan Luas Lahan vs Hasil Panen sebelumnya.")
-        # Mengambil data historis untuk interpolasi
-        data_hist = list(collection.find({"User": user_id}))
-        if len(data_hist) >= 2:
-            # Simulasi interpolasi: kita asumsikan user menginput luas lahan saat ini
-            luas_saat_ini = st.number_input("Masukkan Luas Lahan Periode Ini (m2)", value=1000.0)
-            
-            # Dalam praktek nyata, kita butuh data luas lahan di histori. 
-            # Karena di pencatatan belum ada kolom luas lahan, kita asumsikan data dummy untuk demo perhitungan matematika
-            x_hist = np.array([500, 1500]) # Contoh luas lahan historis
-            y_hist = np.array([d['Hasil_Panen_Kg'] for d in data_hist[:2]]) # Hasil panen historis
-            
-            prediksi_interp = np.interp(luas_saat_ini, x_hist, y_hist)
-            st.metric("Prediksi Hasil (Interpolasi)", f"{prediksi_interp:,.2f} Kg")
-            st.info("Catatan: Interpolasi ini menghitung estimasi hasil berdasarkan perbandingan luas lahan pada data historis Anda.")
-        else:
-            st.warning("Data historis minimal 2 periode diperlukan untuk perhitungan interpolasi.")
-
-with tab3:
-    st.subheader("Laporan Produksi Terdaftar")
-    
-    data_user = list(collection.find({"User": user_id}, {"_id": 0}))
-    
-    if data_user:
-        df = pd.DataFrame(data_user)
-        
-        # REVISI: Mengubah indeks agar dimulai dari 1
-        df.index = range(1, len(df) + 1)
-        df.index.name = "No"
-        
-        st.write("Tabel Rincian Aktivitas")
-        
-        # REVISI: Memberikan warna pada tabel agar lebih tegas dan terlihat
-        styled_df = df.style.set_table_styles([
-            {'selector': 'th', 'props': [
-                ('background-color', '#2d5a27'), 
-                ('color', 'white'), 
-                ('font-weight', 'bold'),
-                ('text-align', 'center')
-            ]},
-            {'selector': 'td', 'props': [
-                ('border', '1px solid #d3d3d3'),
-                ('padding', '8px')
-            ]}
-        ])
-        
-        # Menampilkan tabel yang sudah diperbaiki desainnya
-        st.dataframe(styled_df, use_container_width=True)
-        
-        st.markdown("### Visualisasi Tren")
-        col_vis1, col_vis2 = st.columns(2)
-        
-        with col_vis1:
-            st.write("Hasil Panen per Periode (Kg)")
-            st.bar_chart(df.set_index("Periode")["Hasil_Panen_Kg"])
-            
-        with col_vis2:
-            st.write("Analisis Keuntungan (Rp)")
-            st.line_chart(df.set_index("Periode")["Keuntungan"])
-            
-        # Ringkasan Statistik
-        st.markdown("### Ringkasan Performa")
-        total_untung = df[df["Status"] == "UNTUNG"].shape[0]
-        total_rugi = df[df["Status"] == "RUGI"].shape[0]
-        
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Total Panen Terakumulasi", f"{df['Hasil_Panen_Kg'].sum():,.0f} Kg")
-        c2.metric("Total Keuntungan Bersih", f"Rp {df['Keuntungan'].sum():,.0f}")
-        c3.write(f"Frekuensi: **{total_untung}** Kali Untung, **{total_rugi}** Kali Rugi")
-    else:
-        st.write("Belum ada data untuk divisualisasikan.")
+st.divider()
+st.info("👈 Silakan navigasi ke menu **Login / Register** di sebelah kiri untuk mulai merencanakan produksi Anda.")
