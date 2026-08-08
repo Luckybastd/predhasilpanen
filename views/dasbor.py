@@ -6,7 +6,7 @@ from bson.objectid import ObjectId
 
 # Proteksi Akses Lapis Kedua
 if not st.session_state.get("logged_in") or st.session_state.get("role") == "admin":
-    st.warning("Akses ditolak.")
+    st.warning("Akses ditolak. Halaman ini khusus Petani.")
     st.stop()
 
 user_aktif = st.session_state.username
@@ -72,22 +72,42 @@ with tab1:
         st.success("Data berhasil disimpan ke basis data.")
 
 with tab2:
-    st.subheader("Manajemen Rekam Jejak (Update & Delete)")
+    st.subheader("Manajemen Rekam Jejak Data")
     data_hist = list(collection.find({"User": user_aktif}))
     
     if data_hist:
-        df_edit = pd.DataFrame(data_hist)
-        df_edit['_id'] = df_edit['_id'].astype(str)
-        st.dataframe(df_edit.drop(columns=["User"]), use_container_width=True)
+        # Membuat Header Tabel Kustom yang Rapi
+        col_h1, col_h2, col_h3, col_h4, col_h5 = st.columns([2, 2, 2, 2, 2])
+        col_h1.markdown("**Periode**")
+        col_h2.markdown("**Tanaman**")
+        col_h3.markdown("**Panen (Kg)**")
+        col_h4.markdown("**Keuntungan (Rp)**")
+        col_h5.markdown("**Aksi**")
+        st.markdown("---")
         
-        st.markdown("#### Hapus Data Permanen")
-        id_to_delete = st.selectbox("Pilih ID Data yang akan dihapus", df_edit['_id'].tolist())
-        if st.button("Hapus Data Terpilih"):
-            collection.delete_one({"_id": ObjectId(id_to_delete)})
-            st.success("Data berhasil dihapus. Silakan muat ulang halaman.")
-            st.rerun()
+        # Iterasi untuk menampilkan data beserta tombol hapus di tiap baris
+        for item in data_hist:
+            c1, c2, c3, c4, c5 = st.columns([2, 2, 2, 2, 2])
+            c1.write(item['Periode'])
+            c2.write(item['Jenis_Tanaman'])
+            c3.write(f"{item['Hasil_Panen_Kg']}")
+            c4.write(f"{item['Keuntungan']:,.0f}")
+            
+            with c5:
+                # Membuat jendela konfirmasi menggunakan popover
+                with st.popover("Hapus"):
+                    st.write("Apakah Anda ingin menghapus data ini?")
+                    col_ya, col_tidak = st.columns(2)
+                    with col_ya:
+                        if st.button("Ya", key=f"ya_{item['_id']}", type="primary"):
+                            collection.delete_one({"_id": item['_id']})
+                            st.rerun()
+                    with col_tidak:
+                        if st.button("Tidak", key=f"tdk_{item['_id']}"):
+                            st.rerun() # Menutup popover
+            st.markdown("<hr style='margin:0px; padding:0px; opacity: 0.3;'>", unsafe_allow_html=True)
     else:
-        st.write("Belum ada data untuk dikelola.")
+        st.write("Belum ada data pencatatan.")
 
 with tab3:
     st.subheader("Modul Prediksi dan Kalkulasi")
@@ -135,7 +155,7 @@ with tab3:
             with col_target:
                 target_luas = st.number_input("Target Luas Lahan (m2)", value=2000.0)
             with col_partisi:
-                jumlah_partisi = st.number_input("Jumlah Partisi Iterasi", min_value=1, max_value=36, value=10)
+                jumlah_partisi = st.number_input("Jumlah Partisi Iterasi", min_value=1, max_value=36, value=36)
                 
             st.latex(r"y = y_1 + \frac{(x - x_1)(y_2 - y_1)}{(x_2 - x_1)}")
             
@@ -154,7 +174,7 @@ with tab3:
                 for i in range(1, jumlah_partisi + 1):
                     x_step = x2 + (step_increment * i)
                     y_step = y1 + ((x_step - x1) * gradien)
-                    st.write(f"Partisi ke-{i}: Luas Lahan = {x_step:.2f} m² $\\rightarrow$ Proyeksi Panen = {y_step:.2f} Kg")
+                    st.write(f"Partisi {i}: Luas Lahan = {x_step:.2f} m² $\\rightarrow$ Proyeksi Panen = {y_step:.2f} Kg")
                 
                 y_final = y1 + ((target_luas - x1) * gradien)
                 st.success(f"Kesimpulan: Target Luas Lahan {target_luas} m² diproyeksikan menghasilkan {y_final:.2f} Kg.")
