@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from pymongo import MongoClient
-from bson.objectid import ObjectId
 
 if not st.session_state.get("logged_in") or st.session_state.get("role") != "admin":
     st.error("Akses Ditolak. Halaman ini khusus Administrator.")
@@ -31,38 +30,40 @@ with tab_data:
     if semua_data:
         df_global = pd.DataFrame(semua_data)
         df_global.index = range(1, len(df_global) + 1)
-        df_global.index.name = "Baris"
+        df_global["Tandai Hapus"] = False
         
         c1, c2 = st.columns(2)
         c1.metric("Total Pencatatan", len(df_global))
         c2.metric("Total Keuntungan Keseluruhan", f"Rp {df_global['Keuntungan'].sum():,.0f}")
         
-        kolom_tampil = ["User", "Periode", "Jenis_Tanaman", "Luas_Lahan", "Biaya_Lahan", "Biaya_Bibit", "Biaya_Pupuk", "Biaya_Perawatan", "Hasil_Panen_Kg", "Harga_Jual", "Keuntungan", "Status"]
+        kolom_tampil = ["User", "Periode", "Jenis_Tanaman", "Luas_Lahan", "Biaya_Lahan", "Biaya_Bibit", "Biaya_Pupuk", "Biaya_Perawatan", "Hasil_Panen_Kg", "Harga_Jual", "Keuntungan", "Status", "Tandai Hapus"]
+        df_tampil_global = df_global[kolom_tampil]
         
-        styled_df_global = df_global[kolom_tampil].style.set_table_styles([
-            {'selector': 'th', 'props': [('background-color', '#1b3312'), ('color', 'white'), ('text-align', 'center')]}
-        ])
+        st.write("Centang kotak pada kolom paling kanan untuk menghapus transaksi dari server.")
+        edited_global = st.data_editor(
+            df_tampil_global,
+            use_container_width=True,
+            disabled=["User", "Periode", "Jenis_Tanaman", "Luas_Lahan", "Biaya_Lahan", "Biaya_Bibit", "Biaya_Pupuk", "Biaya_Perawatan", "Hasil_Panen_Kg", "Harga_Jual", "Keuntungan", "Status"],
+            column_config={
+                "Tandai Hapus": st.column_config.CheckboxColumn("Tandai Hapus", default=False)
+            }
+        )
         
-        st.write("Basis Data Lengkap (Semua Petani)")
-        st.dataframe(styled_df_global, use_container_width=True)
-        
-        st.markdown("---")
-        st.write("Tindakan: Hapus Data Transaksi")
-        
-        for i, item in enumerate(semua_data, 1):
-            col_teks, col_tombol = st.columns([8, 2])
-            col_teks.write(f"**Baris {i}**: {item.get('User', 'Unknown')} | {item['Periode']} | {item['Jenis_Tanaman']}")
-            with col_tombol:
-                with st.popover("Hapus"):
-                    st.write("Apakah Anda ingin menghapus data ini?")
-                    col_ya, col_tidak = st.columns(2)
-                    with col_ya:
-                        if st.button("Ya", key=f"yad_{item['_id']}", type="primary"):
-                            db.pencatatan.delete_one({"_id": item['_id']})
-                            st.rerun()
-                    with col_tidak:
-                        if st.button("Tidak", key=f"tdkd_{item['_id']}"):
-                            st.rerun()
+        baris_dihapus_global = edited_global[edited_global["Tandai Hapus"] == True]
+        if not baris_dihapus_global.empty:
+            st.markdown("---")
+            with st.popover("Konfirmasi Penghapusan Data"):
+                st.write("Apakah anda ingin menghapus data ini?")
+                col_ya, col_tidak = st.columns(2)
+                with col_ya:
+                    if st.button("Ya", type="primary"):
+                        for idx in baris_dihapus_global.index:
+                            id_dok = df_global.loc[idx, '_id']
+                            db.pencatatan.delete_one({"_id": id_dok})
+                        st.rerun()
+                with col_tidak:
+                    if st.button("Tidak"):
+                        st.rerun()
     else:
         st.info("Basis data transaksi kosong.")
 
@@ -73,27 +74,33 @@ with tab_users:
     if semua_user:
         df_users = pd.DataFrame(semua_user)
         df_users.index = range(1, len(df_users) + 1)
-        st.dataframe(df_users[['username', 'role']], use_container_width=True)
+        df_users["Tandai Hapus"] = False
         
-        st.markdown("---")
-        st.write("Tindakan: Hapus Akun")
+        st.write("Centang kotak pada kolom paling kanan untuk menghapus pengguna beserta seluruh datanya.")
+        edited_users = st.data_editor(
+            df_users[["username", "role", "Tandai Hapus"]],
+            use_container_width=True,
+            disabled=["username", "role"],
+            column_config={
+                "Tandai Hapus": st.column_config.CheckboxColumn("Tandai Hapus", default=False)
+            }
+        )
         
-        for u in semua_user:
-            cu_teks, cu_tombol = st.columns([8, 2])
-            cu_teks.write(f"Akun: **{u['username']}** | Peran: {u['role']}")
-            
-            with cu_tombol:
-                if u['username'] == 'admin':
-                    st.write("-")
-                else:
-                    with st.popover("Hapus"):
-                        st.write(f"Apakah Anda ingin menghapus data ini?")
-                        uy, ut = st.columns(2)
-                        with uy:
-                            if st.button("Ya", key=f"yau_{u['_id']}", type="primary"):
-                                db.users.delete_one({"_id": u['_id']})
-                                db.pencatatan.delete_many({"User": u['username']})
-                                st.rerun()
-                        with ut:
-                            if st.button("Tidak", key=f"tdku_{u['_id']}"):
-                                st.rerun()
+        user_dihapus = edited_users[edited_users["Tandai Hapus"] == True]
+        if not user_dihapus.empty:
+            st.markdown("---")
+            with st.popover("Konfirmasi Penghapusan Pengguna"):
+                st.write("Apakah anda ingin menghapus pengguna ini beserta datanya?")
+                col_y, col_t = st.columns(2)
+                with col_y:
+                    if st.button("Ya", type="primary"):
+                        for idx in user_dihapus.index:
+                            nama_user = df_users.loc[idx, 'username']
+                            id_user = df_users.loc[idx, '_id']
+                            if nama_user != 'admin':
+                                db.users.delete_one({"_id": id_user})
+                                db.pencatatan.delete_many({"User": nama_user})
+                        st.rerun()
+                with col_t:
+                    if st.button("Tidak", key="batal_user"):
+                        st.rerun()
