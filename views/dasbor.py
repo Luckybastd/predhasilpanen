@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from pymongo import MongoClient
-from bson.objectid import ObjectId
 
 if not st.session_state.get("logged_in") or st.session_state.get("role") == "admin":
     st.warning("Akses ditolak. Halaman ini khusus Petani.")
@@ -76,37 +75,47 @@ with tab2:
     
     if data_hist:
         df = pd.DataFrame(data_hist)
-        # Menampilkan tabel lengkap seperti semula (semua kolom muncul)
         df.index = range(1, len(df) + 1)
-        df.index.name = "Baris"
         
-        kolom_tampil = ["Periode", "Jenis_Tanaman", "Luas_Lahan", "Biaya_Lahan", "Biaya_Bibit", "Biaya_Pupuk", "Biaya_Perawatan", "Hasil_Panen_Kg", "Harga_Jual", "Keuntungan", "Status"]
+        # Menambahkan kolom boolean kosong untuk interaksi checkbox
+        df["Tandai Hapus"] = False
         
-        styled_df = df[kolom_tampil].style.set_table_styles([
-            {'selector': 'th', 'props': [('background-color', '#2d5a27'), ('color', 'white'), ('text-align', 'center')]}
-        ])
+        kolom_tampil = ["Periode", "Jenis_Tanaman", "Luas_Lahan", "Biaya_Lahan", "Biaya_Bibit", "Biaya_Pupuk", "Biaya_Perawatan", "Hasil_Panen_Kg", "Harga_Jual", "Keuntungan", "Status", "Tandai Hapus"]
+        df_tampil = df[kolom_tampil]
         
-        st.write("Tabel Rincian Aktivitas Lengkap")
-        st.dataframe(styled_df, use_container_width=True)
+        st.write("Centang kotak pada kolom paling kanan untuk menghapus data.")
         
-        st.markdown("---")
-        st.write("Tindakan: Hapus Data")
+        # Menggunakan data_editor agar checkbox bisa diklik di dalam tabel
+        edited_df = st.data_editor(
+            df_tampil,
+            use_container_width=True,
+            disabled=["Periode", "Jenis_Tanaman", "Luas_Lahan", "Biaya_Lahan", "Biaya_Bibit", "Biaya_Pupuk", "Biaya_Perawatan", "Hasil_Panen_Kg", "Harga_Jual", "Keuntungan", "Status"],
+            column_config={
+                "Tandai Hapus": st.column_config.CheckboxColumn(
+                    "Tandai Hapus",
+                    help="Centang untuk menghapus baris ini",
+                    default=False,
+                )
+            }
+        )
         
-        # Panel Hapus Data dengan Konfirmasi
-        for i, item in enumerate(data_hist, 1):
-            col_teks, col_tombol = st.columns([8, 2])
-            col_teks.write(f"**Baris {i}**: {item['Periode']} | {item['Jenis_Tanaman']} | Keuntungan: Rp {item['Keuntungan']:,.0f}")
-            with col_tombol:
-                with st.popover("Hapus"):
-                    st.write("Apakah Anda ingin menghapus data ini?")
-                    col_ya, col_tidak = st.columns(2)
-                    with col_ya:
-                        if st.button("Ya", key=f"ya_{item['_id']}", type="primary"):
-                            collection.delete_one({"_id": item['_id']})
-                            st.rerun()
-                    with col_tidak:
-                        if st.button("Tidak", key=f"tdk_{item['_id']}"):
-                            st.rerun()
+        # Mendeteksi jika ada kotak yang dicentang
+        baris_dihapus = edited_df[edited_df["Tandai Hapus"] == True]
+        
+        if not baris_dihapus.empty:
+            st.markdown("---")
+            with st.popover("Konfirmasi Penghapusan Data"):
+                st.write("Apakah anda ingin menghapus data ini?")
+                col_ya, col_tidak = st.columns(2)
+                with col_ya:
+                    if st.button("Ya", type="primary"):
+                        for idx in baris_dihapus.index:
+                            id_dokumen = df.loc[idx, '_id']
+                            collection.delete_one({"_id": id_dokumen})
+                        st.rerun()
+                with col_tidak:
+                    if st.button("Tidak"):
+                        st.rerun()
     else:
         st.write("Belum ada data pencatatan.")
 
@@ -172,7 +181,6 @@ with tab3:
                 step_increment = selisih_total / jumlah_partisi
                 
                 st.write("**Rincian Iterasi Partisi Ekstrapolasi:**")
-                # Menampilkan masing-masing partisi perhitungan secara eksplisit
                 for i in range(1, jumlah_partisi + 1):
                     x_step = x2 + (step_increment * i)
                     y_step = y1 + ((x_step - x1) * gradien)
