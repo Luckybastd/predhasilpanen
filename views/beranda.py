@@ -13,7 +13,7 @@ st.markdown("""
 st.markdown("""
     <div class="hero-section">
         <h1 style='font-size: 3rem;'>Selamat Datang di TANIKITA</h1>
-        <p style='font-size: 2rem; color: #3b592d;'>Sistem Informasi Manajemen, Pencatatan Finansial, dan Kalkulasi Hasil Panen Terpadu.</p>
+        <p style='font-size: 3rem; color: #3b592d;'>Sistem Informasi Manajemen, Pencatatan Finansial, dan Kalkulasi Hasil Panen Terpadu.</p>
     </div>
 """, unsafe_allow_html=True)
 
