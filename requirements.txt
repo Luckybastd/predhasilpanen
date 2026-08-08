@@ -1,4 +1,6 @@
 streamlit
 pymongo
 pandas
+numpy
 dnspython
+bcrypt
