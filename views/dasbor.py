@@ -4,7 +4,6 @@ import numpy as np
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 
-# Proteksi Akses Lapis Kedua
 if not st.session_state.get("logged_in") or st.session_state.get("role") == "admin":
     st.warning("Akses ditolak. Halaman ini khusus Petani.")
     st.stop()
@@ -76,25 +75,28 @@ with tab2:
     data_hist = list(collection.find({"User": user_aktif}))
     
     if data_hist:
-        # Membuat Header Tabel Kustom yang Rapi
-        col_h1, col_h2, col_h3, col_h4, col_h5 = st.columns([2, 2, 2, 2, 2])
-        col_h1.markdown("**Periode**")
-        col_h2.markdown("**Tanaman**")
-        col_h3.markdown("**Panen (Kg)**")
-        col_h4.markdown("**Keuntungan (Rp)**")
-        col_h5.markdown("**Aksi**")
-        st.markdown("---")
+        df = pd.DataFrame(data_hist)
+        # Menampilkan tabel lengkap seperti semula (semua kolom muncul)
+        df.index = range(1, len(df) + 1)
+        df.index.name = "Baris"
         
-        # Iterasi untuk menampilkan data beserta tombol hapus di tiap baris
-        for item in data_hist:
-            c1, c2, c3, c4, c5 = st.columns([2, 2, 2, 2, 2])
-            c1.write(item['Periode'])
-            c2.write(item['Jenis_Tanaman'])
-            c3.write(f"{item['Hasil_Panen_Kg']}")
-            c4.write(f"{item['Keuntungan']:,.0f}")
-            
-            with c5:
-                # Membuat jendela konfirmasi menggunakan popover
+        kolom_tampil = ["Periode", "Jenis_Tanaman", "Luas_Lahan", "Biaya_Lahan", "Biaya_Bibit", "Biaya_Pupuk", "Biaya_Perawatan", "Hasil_Panen_Kg", "Harga_Jual", "Keuntungan", "Status"]
+        
+        styled_df = df[kolom_tampil].style.set_table_styles([
+            {'selector': 'th', 'props': [('background-color', '#2d5a27'), ('color', 'white'), ('text-align', 'center')]}
+        ])
+        
+        st.write("Tabel Rincian Aktivitas Lengkap")
+        st.dataframe(styled_df, use_container_width=True)
+        
+        st.markdown("---")
+        st.write("Tindakan: Hapus Data")
+        
+        # Panel Hapus Data dengan Konfirmasi
+        for i, item in enumerate(data_hist, 1):
+            col_teks, col_tombol = st.columns([8, 2])
+            col_teks.write(f"**Baris {i}**: {item['Periode']} | {item['Jenis_Tanaman']} | Keuntungan: Rp {item['Keuntungan']:,.0f}")
+            with col_tombol:
                 with st.popover("Hapus"):
                     st.write("Apakah Anda ingin menghapus data ini?")
                     col_ya, col_tidak = st.columns(2)
@@ -104,8 +106,7 @@ with tab2:
                             st.rerun()
                     with col_tidak:
                         if st.button("Tidak", key=f"tdk_{item['_id']}"):
-                            st.rerun() # Menutup popover
-            st.markdown("<hr style='margin:0px; padding:0px; opacity: 0.3;'>", unsafe_allow_html=True)
+                            st.rerun()
     else:
         st.write("Belum ada data pencatatan.")
 
@@ -171,6 +172,7 @@ with tab3:
                 step_increment = selisih_total / jumlah_partisi
                 
                 st.write("**Rincian Iterasi Partisi Ekstrapolasi:**")
+                # Menampilkan masing-masing partisi perhitungan secara eksplisit
                 for i in range(1, jumlah_partisi + 1):
                     x_step = x2 + (step_increment * i)
                     y_step = y1 + ((x_step - x1) * gradien)
