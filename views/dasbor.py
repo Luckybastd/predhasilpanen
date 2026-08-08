@@ -25,7 +25,7 @@ collection = db.pencatatan
 st.title("Dasbor Manajemen Produksi")
 st.write("Catat, analisis, dan proyeksikan hasil pertanian Anda.")
 
-tab1, tab2, tab3, tab4 = st.tabs(["Pencatatan Baru", "Manajemen Data (CRUD)", "Kalkulasi & Prediksi", "Visualisasi"])
+tab1, tab2, tab3, tab4 = st.tabs(["Pencatatan Baru", "Manajemen Data", "Kalkulasi & Prediksi", "Visualisasi"])
 
 with tab1:
     st.subheader("Formulir Data Produksi")
