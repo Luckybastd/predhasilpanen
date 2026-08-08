@@ -25,40 +25,70 @@ db = client.pertanian_db
 tab_data, tab_users = st.tabs(["Basis Data Transaksi", "Manajemen Akun"])
 
 with tab_data:
+    st.subheader("Pengelolaan Data Transaksi")
     semua_data = list(db.pencatatan.find())
+    
     if semua_data:
-        df_global = pd.DataFrame(semua_data)
-        df_global['_id'] = df_global['_id'].astype(str)
+        # Header Tabel Kustom
+        col_h1, col_h2, col_h3, col_h4, col_h5 = st.columns([2, 2, 2, 2, 2])
+        col_h1.markdown("**User**")
+        col_h2.markdown("**Periode**")
+        col_h3.markdown("**Tanaman**")
+        col_h4.markdown("**Keuntungan (Rp)**")
+        col_h5.markdown("**Aksi**")
+        st.markdown("---")
         
-        c1, c2 = st.columns(2)
-        c1.metric("Total Pencatatan", len(df_global))
-        c2.metric("Total Keuntungan Keseluruhan", f"Rp {df_global['Keuntungan'].sum():,.0f}")
-        
-        st.dataframe(df_global, use_container_width=True)
-        
-        st.markdown("### Penghapusan Data Transaksi (Force Delete)")
-        id_hapus = st.selectbox("Pilih ID Transaksi untuk dihapus", df_global['_id'].tolist())
-        if st.button("Hapus Transaksi Secara Paksa", type="primary"):
-            db.pencatatan.delete_one({"_id": ObjectId(id_hapus)})
-            st.success("Transaksi berhasil dihapus dari sistem.")
-            st.rerun()
+        for item in semua_data:
+            c1, c2, c3, c4, c5 = st.columns([2, 2, 2, 2, 2])
+            c1.write(item.get('User', 'Unknown'))
+            c2.write(item['Periode'])
+            c3.write(item['Jenis_Tanaman'])
+            c4.write(f"{item['Keuntungan']:,.0f}")
+            
+            with c5:
+                with st.popover("Hapus"):
+                    st.write("Apakah Anda ingin menghapus data ini?")
+                    col_ya, col_tidak = st.columns(2)
+                    with col_ya:
+                        if st.button("Ya", key=f"yad_{item['_id']}", type="primary"):
+                            db.pencatatan.delete_one({"_id": item['_id']})
+                            st.rerun()
+                    with col_tidak:
+                        if st.button("Tidak", key=f"tdkd_{item['_id']}"):
+                            st.rerun()
+            st.markdown("<hr style='margin:0px; padding:0px; opacity: 0.3;'>", unsafe_allow_html=True)
     else:
         st.info("Basis data transaksi kosong.")
 
 with tab_users:
+    st.subheader("Pengelolaan Akun Pengguna")
     semua_user = list(db.users.find({}, {"password": 0}))
+    
     if semua_user:
-        df_users = pd.DataFrame(semua_user)
-        df_users['_id'] = df_users['_id'].astype(str)
-        st.dataframe(df_users, use_container_width=True)
+        u_h1, u_h2, u_h3 = st.columns([3, 3, 3])
+        u_h1.markdown("**Username**")
+        u_h2.markdown("**Role (Peran)**")
+        u_h3.markdown("**Aksi**")
+        st.markdown("---")
         
-        st.markdown("### Penghapusan Akun Pengguna")
-        user_hapus = st.selectbox("Pilih Username yang akan dihapus", df_users['username'].tolist())
-        if st.button("Hapus Akun Pengguna", type="primary"):
-            if user_hapus == "admin":
-                st.error("Akun Administrator utama tidak dapat dihapus.")
-            else:
-                db.users.delete_one({"username": user_hapus})
-                db.pencatatan.delete_many({"User": user_hapus}) # Hapus juga semua data miliknya
-                st.success(f"Akun {user_hapus} beserta datanya telah dihapus.")
-                st.rerun()
+        for u in semua_user:
+            uc1, uc2, uc3 = st.columns([3, 3, 3])
+            uc1.write(u['username'])
+            uc2.write(u['role'])
+            
+            with uc3:
+                if u['username'] == 'admin':
+                    st.write("-")
+                else:
+                    with st.popover("Hapus"):
+                        st.write(f"Apakah Anda ingin menghapus pengguna {u['username']} beserta seluruh datanya?")
+                        uy, ut = st.columns(2)
+                        with uy:
+                            if st.button("Ya", key=f"yau_{u['_id']}", type="primary"):
+                                db.users.delete_one({"_id": u['_id']})
+                                db.pencatatan.delete_many({"User": u['username']})
+                                st.rerun()
+                        with ut:
+                            if st.button("Tidak", key=f"tdku_{u['_id']}"):
+                                st.rerun()
+            st.markdown("<hr style='margin:0px; padding:0px; opacity: 0.3;'>", unsafe_allow_html=True)
