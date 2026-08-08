@@ -76,30 +76,21 @@ with tab2:
     if data_hist:
         df = pd.DataFrame(data_hist)
         df.index = range(1, len(df) + 1)
-        
-        # Menambahkan kolom boolean kosong untuk interaksi checkbox
         df["Tandai Hapus"] = False
         
         kolom_tampil = ["Periode", "Jenis_Tanaman", "Luas_Lahan", "Biaya_Lahan", "Biaya_Bibit", "Biaya_Pupuk", "Biaya_Perawatan", "Hasil_Panen_Kg", "Harga_Jual", "Keuntungan", "Status", "Tandai Hapus"]
         df_tampil = df[kolom_tampil]
         
         st.write("Centang kotak pada kolom paling kanan untuk menghapus data.")
-        
-        # Menggunakan data_editor agar checkbox bisa diklik di dalam tabel
         edited_df = st.data_editor(
             df_tampil,
             use_container_width=True,
             disabled=["Periode", "Jenis_Tanaman", "Luas_Lahan", "Biaya_Lahan", "Biaya_Bibit", "Biaya_Pupuk", "Biaya_Perawatan", "Hasil_Panen_Kg", "Harga_Jual", "Keuntungan", "Status"],
             column_config={
-                "Tandai Hapus": st.column_config.CheckboxColumn(
-                    "Tandai Hapus",
-                    help="Centang untuk menghapus baris ini",
-                    default=False,
-                )
+                "Tandai Hapus": st.column_config.CheckboxColumn("Tandai Hapus", default=False)
             }
         )
         
-        # Mendeteksi jika ada kotak yang dicentang
         baris_dihapus = edited_df[edited_df["Tandai Hapus"] == True]
         
         if not baris_dihapus.empty:
@@ -165,7 +156,7 @@ with tab3:
             with col_target:
                 target_luas = st.number_input("Target Luas Lahan (m2)", value=2000.0)
             with col_partisi:
-                jumlah_partisi = st.number_input("Jumlah Partisi Iterasi", min_value=1, max_value=36, value=36)
+                jumlah_partisi = st.number_input("Jumlah Partisi Iterasi", min_value=1, max_value=50, value=36)
                 
             st.latex(r"y = y_1 + \frac{(x - x_1)(y_2 - y_1)}{(x_2 - x_1)}")
             
@@ -181,6 +172,7 @@ with tab3:
                 step_increment = selisih_total / jumlah_partisi
                 
                 st.write("**Rincian Iterasi Partisi Ekstrapolasi:**")
+                # Menampilkan masing-masing partisi secara rinci
                 for i in range(1, jumlah_partisi + 1):
                     x_step = x2 + (step_increment * i)
                     y_step = y1 + ((x_step - x1) * gradien)
@@ -192,10 +184,20 @@ with tab3:
             st.warning("Dibutuhkan minimal 2 rekaman data historis.")
 
 with tab4:
-    st.subheader("Visualisasi Keuangan Produksi")
+    st.subheader("Visualisasi Tren")
     data_hist = list(collection.find({"User": user_aktif}))
     if data_hist:
         df_vis = pd.DataFrame(data_hist)
-        st.line_chart(df_vis.set_index("Periode")["Keuntungan"])
+        
+        # Membagi layar menjadi 2 kolom untuk grafik berdampingan
+        col_vis1, col_vis2 = st.columns(2)
+        
+        with col_vis1:
+            st.write("Hasil Panen per Periode (Kg)")
+            st.bar_chart(df_vis.set_index("Periode")["Hasil_Panen_Kg"])
+            
+        with col_vis2:
+            st.write("Analisis Keuntungan (Rp)")
+            st.line_chart(df_vis.set_index("Periode")["Keuntungan"])
     else:
-        st.write("Belum ada data untuk ditampilkan.")
+        st.write("Belum ada data untuk divisualisasikan.")
