@@ -11,7 +11,7 @@ if "logged_in" not in st.session_state:
 
 # Mendefinisikan halaman-halaman yang ada di folder views
 beranda_page = st.Page("views/beranda.py", title="Beranda Utama")
-login_page = st.Page("views/login.py", title="Otentikasi Sistem")
+login_page = st.Page("views/login.py", title="Masuk atau Daftar Akun")
 dasbor_page = st.Page("views/dasbor.py", title="Dasbor Manajemen Produksi")
 admin_page = st.Page("views/admin.py", title="Panel Kendali Administrator")
 
